@@ -40,10 +40,10 @@ InitString PROTO,
     stringPtr: DWORD
 
 InsertChar PROTO,
-    data: String, char: BYTE, pos:DWORD
+    stringPtr: DWORD, char: BYTE, pos:DWORD
 
 DeleteChar PROTO,
-    data: String, pos:DWORD
+    stringPtr: DWORD, pos:DWORD
 
 DestroyString PROTO, 
     stringPtr: DWORD
