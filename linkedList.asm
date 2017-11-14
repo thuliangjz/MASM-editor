@@ -20,42 +20,22 @@ thisList EQU <(List PTR [edi])>
 outstr1 db "head:%x", endl, 0
 outstr2 db "data:%s", endl, 0
 outstrtest db "count : %d", endl, 0
-tmpAddr DWORD ?
-head Node <>
 mylist List <>
 
 
 
 .code
 main PROC
-    local data: DWORD
     local tmpStr: BYTE
-;    invoke crt_printf, ADDR outstr1, ADDR head
-;    pushad
-;    INVOKE crt_malloc, SIZEOF Node
-;    mov tmpAddr, eax
-;    popad
-;    mov eax, tmpAddr
-;    mov head.next, eax
-
-;    pushad
-;    invoke crt_printf, ADDR outstr1, head.next
-;    popad
-;    mov eax,  head.next
-;    mov (Node PTR [eax]).data, 2
-;    mov eax, head.next
-;    invoke crt_printf, ADDR outstr2, (Node PTR [eax]).data
-;    invoke ExitProcess, 0
+    local stringPtr: DWORD
     invoke InitList, ADDR mylist
     mov tmpStr, 'a'
     mov ecx, 10
 createList:
     invoke InsertNode, ADDR mylist
     mov esi, mylist.currentNode
-    mov esi, thisNode.data.string
-    mov al, tmpStr
-    mov BYTE PTR[esi], al
-    mov BYTE PTR[esi + 1], 0
+    invoke InitString, esi
+    invoke InsertChar, esi, tmpStr, 0 
     inc tmpStr
     loop createList
 
@@ -63,9 +43,9 @@ createList:
     mov esi, mylist.head
 printList:
     mov eax, thisNode.data.string
-    mov data, eax
+    mov stringPtr, eax
     pushad
-        invoke crt_printf, ADDR outstr2, data
+        invoke crt_printf, ADDR outstr2, stringPtr
     popad
     mov eax, thisNode.next
     mov esi, eax
@@ -84,17 +64,24 @@ deleteList:
     mov esi, mylist.currentNode
 printList2:
     mov eax, thisNode.data.string
-    mov data, eax
+    mov stringPtr, eax
     pushad
-        invoke crt_printf, ADDR outstr2, data
+        invoke crt_printf, ADDR outstr2, stringPtr
     popad
     mov eax, thisNode.next
     mov esi, eax
     loop printList2
-
+	
+	mov esi, mylist.currentNode
+    invoke InsertChar, mylist.currentNode, tmpStr, 1
+	mov esi, (Node PTR [esi]).data.string
+    pushad
+		invoke crt_printf, ADDR outstr2, esi
+    popad
 
     invoke ExitProcess, 0
 main ENDP
+
 
 
 
@@ -142,16 +129,6 @@ InsertNode PROC, listPtr: DWORD
         
         invoke InitString, ADDR thisNode.data
 
-;        pushad
-;            invoke crt_malloc, BUFFER_INIT_LENGTH
-;            mov tmpString, eax
-;        popad
-;        mov eax, tmpString
-;        mov thisNode.data.string, eax   
-;        mov thisNode.data.dataLength, 0
-;        mov thisNode.data.bufferLength, BUFFER_INIT_LENGTH
-        
-        
     popad
     ret
 InsertNode ENDP
@@ -204,28 +181,107 @@ DeleteNode ENDP
 InitString PROC, stringPtr: DWORD
     pushad
         invoke crt_malloc, BUFFER_INIT_LENGTH
-        mov esi, stringPtr
-        mov (String PTR [esi]).string, eax
-        mov (String PTR [esi]).bufferLength, BUFFER_INIT_LENGTH
-        mov (String PTR [esi]).dataLength, 0
+        mov edi, stringPtr
+        mov (String PTR [edi]).string, eax
+        mov (String PTR [edi]).bufferLength, BUFFER_INIT_LENGTH
+        mov (String PTR [edi]).dataLength, 0
+        mov esi, eax
+        mov BYTE PTR [esi], 0
     popad
     ret
 InitString ENDP
 
-InsertChar PROC, data: String, char: BYTE, pos:DWORD
+InsertChar PROC, stringPtr: DWORD, char: BYTE, pos:DWORD
+    LOCAL tmpStr
+    LOCAL tmpStrHead
+    LOCAL i
     pushad
-        
+        mov i, 0
+        mov edi, stringPtr
+        mov esi, (String PTR [edi]).string
+        mov eax, (String PTR [edi]).dataLength
+        mov ebx, (String PTR [edi]).bufferLength
+        .if pos > eax
+            jmp quit
+        .endif
+        inc eax                 ;eax = new length, ebx = new bufferlength
+        .if eax == ebx                   
+            add ebx, ebx
+            pushad
+                invoke crt_malloc, ebx
+                mov tmpStr, eax
+                mov tmpStrHead, eax
+            popad
+            mov ecx, eax
+            inc ecx
+            push eax
+            mov pos, eax
+        copystr:
+            .if i == eax 
+                mov dl, char
+                mov BYTE PTR [tmpStr], dl
+                inc tmpStr
+                inc i
+            .else
+                mov dl, BYTE PTR [esi]
+                mov BYTE PTR [tmpStr], dl
+                inc esi
+                inc tmpStr
+                inc i
+            .endif
+            loop copystr
+            pop eax
 
+            pushad
+                invoke crt_free, esi
+            popad
+            mov esi, tmpStrHead
+            mov (String PTR [edi]).string, esi
+            mov (String PTR [edi]).dataLength,eax
+            mov (String PTR [edi]).bufferLength, ebx
 
+        .else
+            mov ecx, eax
+            sub ecx, pos
+            add esi, eax
+        copystr2:
+            mov dl, BYTE PTR[esi - 1]
+            mov BYTE PTR [esi], dl
+            dec esi
+            loop copystr2
+
+            mov dl, char
+            mov BYTE PTR [esi], dl
+            mov (String PTR [edi]).dataLength,eax
+        .endif
+    
+quit:
     popad
     ret
 InsertChar ENDP
 
-DeleteChar PROC,  data: String, pos:DWORD
+DeleteChar PROC,  stringPtr: DWORD, pos:DWORD
     pushad
+        mov edi, stringPtr
+        mov esi, (String PTR [edi]).string
+        mov eax, (String PTR [edi]).dataLength
+        mov ebx, (String PTR [edi]).bufferLength
+        .if pos >= eax
+            jmp quit
+        .endif
+        mov ecx, eax
+        sub ecx, pos
+        add esi, pos
+    deleteLoop:
+        mov dl, BYTE PTR [esi + 1]
+        mov BYTE PTR [esi], dl
+        inc esi
+        loop deleteLoop
 
+        dec eax
+        mov (String PTR [edi]).dataLength, eax
 
-
+quit:
     popad
     ret
 DeleteChar ENDP
