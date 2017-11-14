@@ -1,3 +1,5 @@
+IFNDEF LINKED_LIST
+LINKED_LIST equ <1>
 ; (linkedList.inc)
 include masm32.inc
 include msvcrt.inc
@@ -47,3 +49,4 @@ DeleteChar PROTO,
 
 DestroyString PROTO, 
     stringPtr: DWORD
+ENDIF
