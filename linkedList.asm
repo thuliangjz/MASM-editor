@@ -9,14 +9,16 @@ includelib masm32.lib
 includelib kernel32.lib
 includelib msvcrt.lib
 
+BUFFER_INIT_LENGTH EQU 100
 endl EQU <0dh, 0ah>
 thisNode EQU <(Node PTR [esi])>
 thisList EQU <(List PTR [edi])>
 
+
 .data
 ;head Node <0, 0, 0, 0>
 outstr1 db "head:%x", endl, 0
-outstr2 db "data:%d", endl, 0
+outstr2 db "data:%s", endl, 0
 outstrtest db "count : %d", endl, 0
 tmpAddr DWORD ?
 head Node <>
@@ -27,6 +29,7 @@ mylist List <>
 .code
 main PROC
     local data: DWORD
+    local tmpStr: BYTE
 ;    invoke crt_printf, ADDR outstr1, ADDR head
 ;    pushad
 ;    INVOKE crt_malloc, SIZEOF Node
@@ -44,13 +47,16 @@ main PROC
 ;    invoke crt_printf, ADDR outstr2, (Node PTR [eax]).data
 ;    invoke ExitProcess, 0
     invoke InitList, ADDR mylist
+    mov tmpStr, 'a'
     mov ecx, 10
-
 createList:
-
     invoke InsertNode, ADDR mylist
     mov esi, mylist.currentNode
-    mov thisNode.data.string , ecx
+    mov esi, thisNode.data.string
+    mov al, tmpStr
+    mov BYTE PTR[esi], al
+    mov BYTE PTR[esi + 1], 0
+    inc tmpStr
     loop createList
 
     mov ecx, 10
@@ -114,27 +120,37 @@ InitList ENDP
 
 
 InsertNode PROC, listPtr: DWORD
-    ;LOCAL @tmpNext: DWORD
+    LOCAL tmpString: DWORD
     pushad
-        ;eax: new node,   ebx:oldnode.next  ecx:oldnode
+        ;eax: newnode,   ebx:oldnode.next  ecx:oldnode
         invoke crt_malloc, SIZEOF Node
         mov edi, listPtr
         mov ecx, thisList.currentNode
         mov esi, ecx
-        mov ebx, thisNode.next        ;thisNode == list.currentNode, ebx = list.currentNode->next
+        mov ebx, thisNode.next        ;thisNode == oldnode
         mov thisNode.next, eax         
-      
-        mov esi, eax  
-     
-        mov thisNode.data.string, 0   ;thisNode == the new node
-        mov thisNode.data.dataLength, 0
-        mov thisNode.data.bufferLength, 0
+        .if ebx != 0
+            mov esi, ebx              ;thisNode == oldnode.next
+            mov thisNode.prev, eax
+        .endif
+        mov esi, eax                  ;thisNode == newnode
         mov thisNode.prev, ecx
         mov thisNode.next, ebx
 
         mov thisList.currentNode, eax
         inc thisList.listLength
-        ;mov list.currentNode.next, eax
+        
+        invoke InitString, ADDR thisNode.data
+
+;        pushad
+;            invoke crt_malloc, BUFFER_INIT_LENGTH
+;            mov tmpString, eax
+;        popad
+;        mov eax, tmpString
+;        mov thisNode.data.string, eax   
+;        mov thisNode.data.dataLength, 0
+;        mov thisNode.data.bufferLength, BUFFER_INIT_LENGTH
+        
         
     popad
     ret
@@ -184,19 +200,52 @@ quit:
     ret
 DeleteNode ENDP
 
-InsertChar PROC, data: String
+
+InitString PROC, stringPtr: DWORD
+    pushad
+        invoke crt_malloc, BUFFER_INIT_LENGTH
+        mov esi, stringPtr
+        mov (String PTR [esi]).string, eax
+        mov (String PTR [esi]).bufferLength, BUFFER_INIT_LENGTH
+        mov (String PTR [esi]).dataLength, 0
+    popad
+    ret
+InitString ENDP
+
+InsertChar PROC, data: String, char: BYTE, pos:DWORD
     pushad
         
+
+
     popad
     ret
 InsertChar ENDP
 
-DeleteChar PROC, data: String
+DeleteChar PROC,  data: String, pos:DWORD
     pushad
+
+
 
     popad
     ret
 DeleteChar ENDP
+
+DestroyString PROC, stringPtr: DWORD
+    pushad
+        mov esi, stringPtr
+        mov eax, (String PTR [esi]).bufferLength
+        .if eax == 0
+            jmp quit
+        .endif
+        mov (String PTR [esi]).bufferLength, 0
+        mov (String PTR [esi]).dataLength, 0
+        pushad
+            invoke crt_free, (String PTR [esi]).string
+        popad
+quit:
+    popad
+    ret
+DestroyString ENDP
 
 END main
 

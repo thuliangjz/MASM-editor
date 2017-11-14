@@ -36,8 +36,14 @@ InsertNode PROTO,
 DeleteNode PROTO,
     listPtr: DWORD  
 
+InitString PROTO, 
+    stringPtr: DWORD
+
 InsertChar PROTO,
-    data: String
+    data: String, char: BYTE, pos:DWORD
 
 DeleteChar PROTO,
-    data: String
+    data: String, pos:DWORD
+
+DestroyString PROTO, 
+    stringPtr: DWORD
