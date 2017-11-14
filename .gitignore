@@ -1,2 +1,8 @@
+#liangjz
 *.exe
+*~
 *.obj
+*.bat
+*.swp
+test*
+#liangjz
