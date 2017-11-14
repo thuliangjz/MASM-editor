@@ -5,11 +5,11 @@ include kernel32.inc
 include masm32.inc
 KEY_INPUT STRUCT
   is_special BOOL ?
-  virtual_key WORD ?	;对应于KEY_EVENT_RECORD中的wVirtualKeyCode
+  virtual_key WORD ?	;see wVirtualKeyCode field in KEY_EVENT_RECORD
   ascii_char BYTE ?
 KEY_INPUT ENDS
 GetUserKeyInput PROTO STDCALL
 InitInputQueue PROTO STDCALL
-PopInputQueue PROTO STDCALL p_key_input:DWORD	;成功则返回0，否则（如队列为空）返回1，改变头指针位置
-PeekInputQueue PROTO STDCALL p_key_input:DWORD	;成功返回0，否则返回1，不改变头指针位置
+PopInputQueue PROTO STDCALL p_key_input:DWORD	;return 0 if success, 1 otherwise, change head pointer's position
+PeekInputQueue PROTO STDCALL p_key_input:DWORD	;return 0 if success, 1 oterwise, won't change head pointer's position
 ENDIF
