@@ -5,11 +5,11 @@ include kernel32.inc
 include masm32.inc
 KEY_INPUT STRUCT
   is_special BOOL ?
-  virtual_key WORD ?	;¶ÔÓ¦ÓÚKEY_EVENT_RECORDÖĞµÄwVirtualKeyCode
+  virtual_key WORD ? ;å¯¹åº”äºKEY_EVENT_RECORDä¸­çš„wVirtualKeyCode
   ascii_char BYTE ?
 KEY_INPUT ENDS
 GetUserKeyInput PROTO STDCALL
 InitInputQueue PROTO STDCALL
-PopInputQueue PROTO STDCALL p_key_input:DWORD	;³É¹¦Ôò·µ»Ø0£¬·ñÔò£¨Èç¶ÓÁĞÎª¿Õ£©·µ»Ø1£¬¸Ä±äÍ·Ö¸ÕëÎ»ÖÃ
-PeekInputQueue PROTO STDCALL p_key_input:DWORD	;³É¹¦·µ»Ø0£¬·ñÔò·µ»Ø1£¬²»¸Ä±äÍ·Ö¸ÕëÎ»ÖÃ
+PopInputQueue PROTO STDCALL p_key_input:DWORD	;æˆåŠŸåˆ™è¿”å›0ï¼Œå¦åˆ™ï¼ˆå¦‚é˜Ÿåˆ—ä¸ºç©ºï¼‰è¿”å›1ï¼Œæ”¹å˜å¤´æŒ‡é’ˆä½ç½®
+PeekInputQueue PROTO STDCALL p_key_input:DWORD	;æˆåŠŸè¿”å›0ï¼Œå¦åˆ™è¿”å›1ï¼Œä¸æ”¹å˜å¤´æŒ‡é’ˆä½ç½®
 ENDIF
