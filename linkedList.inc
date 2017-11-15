@@ -1,10 +1,6 @@
 IFNDEF LINKED_LIST
 LINKED_LIST equ <1>
 ; (linkedList.inc)
-include windows.inc
-include kernel32.inc
-include msvcrt.inc
-include masm32.inc
 
 String STRUCT
     string        DWORD     0 

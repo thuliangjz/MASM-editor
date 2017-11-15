@@ -6,7 +6,7 @@ include controll.inc
 include key_handlers.inc
 include input_queue.inc
 include ui.inc
-
+include linkedList.inc
 
 includelib masm32.lib
 includelib kernel32.lib
@@ -17,7 +17,7 @@ endl EQU <0dh, 0ah>
 .data
 program_status DWORD 0   ;0: watching  1:editing 2:commanding
 record_cursor_max_index DWORD 0
-text_list:LinkedList
+text_list LinkedList <>
 
 keyInputHandle PROC
     pushad

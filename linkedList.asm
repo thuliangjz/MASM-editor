@@ -4,6 +4,10 @@
 option casemap :none                    ; case sensitive
 
 include linkedList.inc
+include windows.inc
+include kernel32.inc
+include msvcrt.inc
+include masm32.inc
 
 BUFFER_INIT_LENGTH EQU 100
 endl EQU <0dh, 0ah>

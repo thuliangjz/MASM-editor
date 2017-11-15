@@ -7,10 +7,6 @@ include ui.inc
 include controll.inc
 include key_handlers.inc
 
-includelib masm32.lib
-includelib kernel32.lib
-includelib msvcrt.lib
-
 UpKeyHandler PROC 
     pushad
         mov edi, cursor_position_logic.p_node
