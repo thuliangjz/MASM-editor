@@ -1,11 +1,10 @@
 IFNDEF LINKED_LIST
 LINKED_LIST equ <1>
 ; (linkedList.inc)
-include masm32.inc
-include msvcrt.inc
+include windows.inc
 include kernel32.inc
-;include windows.inc
-
+include msvcrt.inc
+include masm32.inc
 
 String STRUCT
     string        DWORD     0 
@@ -19,12 +18,12 @@ Node STRUCT
     prev          DWORD     0
 Node ENDS 
 
-List STRUCT
+LinkedList STRUCT
     head         DWORD    0
     currentNode  DWORD    0
     listLength   DWORD    0
 
-List ENDS
+LinkedList ENDS
 
 
 
