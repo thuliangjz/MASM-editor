@@ -215,7 +215,7 @@ InsertChar PROC, stringPtr: DWORD, char: BYTE, pos:DWORD
             mov ecx, eax
             inc ecx
             push eax
-            mov pos, eax
+            mov eax, pos
         copystr:
             .if i == eax 
                 mov dl, char
