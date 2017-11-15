@@ -1,10 +1,8 @@
 IFNDEF CONTROLL
 CONTROLL equ <1>
 include linkedList.inc
-include input_queue.inc
-include ui.inc
 
-EXTERNDEF text_list:List
+EXTERNDEF text_list:LinkedList
 
 keyInputHandle PROTO
 
@@ -16,8 +14,6 @@ NormalKeyDeal PROTO,
 
 SpecialKeyDeal PROTO, 
     key_input: KEY_INPUT
-
-
 
 
 ENDIF

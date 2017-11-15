@@ -14,77 +14,7 @@ endl EQU <0dh, 0ah>
 thisNode EQU <(Node PTR [esi])>
 thisList EQU <(List PTR [edi])>
 
-
-.data
-;head Node <0, 0, 0, 0>
-outstr1 db "head:%x", endl, 0
-outstr2 db "data:%s", endl, 0
-outstrtest db "count : %d", endl, 0
-mylist List <>
-
-
-
 .code
-main PROC
-    local tmpStr: BYTE
-    local stringPtr: DWORD
-    invoke InitList, ADDR mylist
-    mov tmpStr, 'a'
-    mov ecx, 10
-createList:
-    invoke InsertNode, ADDR mylist
-    mov esi, mylist.currentNode
-    invoke InitString, esi
-    invoke InsertChar, esi, tmpStr, 0 
-    inc tmpStr
-    loop createList
-
-    mov ecx, 10
-    mov esi, mylist.head
-printList:
-    mov eax, thisNode.data.string
-    mov stringPtr, eax
-    pushad
-        invoke crt_printf, ADDR outstr2, stringPtr
-    popad
-    mov eax, thisNode.next
-    mov esi, eax
-    loop printList
-
-    mov ecx, 5
-    mov esi, mylist.head
-    mov edi, thisNode.next
-    mov mylist.currentNode, edi
-deleteList:
-    invoke DeleteNode, ADDR mylist
-    loop deleteList
-
-
-    mov ecx, 5
-    mov esi, mylist.currentNode
-printList2:
-    mov eax, thisNode.data.string
-    mov stringPtr, eax
-    pushad
-        invoke crt_printf, ADDR outstr2, stringPtr
-    popad
-    mov eax, thisNode.next
-    mov esi, eax
-    loop printList2
-	
-	mov esi, mylist.currentNode
-    invoke InsertChar, mylist.currentNode, tmpStr, 1
-	mov esi, (Node PTR [esi]).data.string
-    pushad
-		invoke crt_printf, ADDR outstr2, esi
-    popad
-
-    invoke ExitProcess, 0
-main ENDP
-
-
-
-
 ;init the list
 InitList PROC, listPtr: DWORD
     ;LOCAL @tmpAddr: DWORD 
@@ -303,6 +233,6 @@ quit:
     ret
 DestroyString ENDP
 
-END main
+END
 
 

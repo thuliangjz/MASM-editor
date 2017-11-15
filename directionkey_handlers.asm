@@ -3,9 +3,13 @@
 option casemap :none                    ; case sensitive
 
 include linkedList.inc
-include input_queue.inc
 include ui.inc
 include controll.inc
+include key_handlers.inc
+
+includelib masm32.lib
+includelib kernel32.lib
+includelib msvcrt.lib
 
 UpKeyHandler PROC 
     pushad
@@ -130,3 +134,5 @@ DownKeyHandler PROC
     popad
     ret
 DownKeyHandler ENDP
+
+END
