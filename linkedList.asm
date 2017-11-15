@@ -5,14 +5,10 @@ option casemap :none                    ; case sensitive
 
 include linkedList.inc
 
-includelib masm32.lib
-includelib kernel32.lib
-includelib msvcrt.lib
-
 BUFFER_INIT_LENGTH EQU 100
 endl EQU <0dh, 0ah>
 thisNode EQU <(Node PTR [esi])>
-thisList EQU <(List PTR [edi])>
+thisList EQU <(LinkedList PTR [edi])>
 
 .code
 ;init the list
