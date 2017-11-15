@@ -4,17 +4,19 @@ include linkedList.inc
 include input_queue.inc
 include ui.inc
 
-keyInputHandle PROTO,
-    keyInput: KEY_INPUT
+EXTERNDEF text_list:List
 
-EditingStatusHandle PROTo, 
-    keyInput: KEY_INPUT
+keyInputHandle PROTO
 
-WatchingStatusHandle PROTO, 
-    keyInput: KEY_INPUT
+EditingStatusHandle PROTO
 
-CommandStatusHandle PROTO, 
-    keyInput: KEY_INPUT
+
+NormalKeyDeal PROTO, 
+    key_input: KEY_INPUT
+
+SpecialKeyDeal PROTO, 
+    key_input: KEY_INPUT
+
 
 
 
