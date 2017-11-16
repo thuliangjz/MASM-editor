@@ -1,6 +1,6 @@
 IFNDEF UTILS
 UTILS equ <1>
-;注意两个操作数应为相同大小
+;浜ゆ崲涓や釜鍐呭瓨涓殑鎿嶄綔鏁帮紝娉ㄦ剰涓や釜鎿嶄綔鏁扮殑澶у皬搴旇鐩稿悓
 mov_m2m MACRO op1, op2
 	push op2
 	pop op1
