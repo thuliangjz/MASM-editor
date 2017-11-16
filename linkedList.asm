@@ -1,13 +1,13 @@
 ; (linkedList.asm)
-.386                                    ; create 32 bit code
+.486                                    ; create 32 bit code
 .model flat, stdcall                    ; 32 bit memory model
 option casemap :none                    ; case sensitive
 
 include linkedList.inc
-
-includelib masm32.lib
-includelib kernel32.lib
-includelib msvcrt.lib
+include windows.inc
+include kernel32.inc
+include msvcrt.inc
+include utils.inc
 
 BUFFER_INIT_LENGTH EQU 100
 endl EQU <0dh, 0ah>
@@ -204,7 +204,7 @@ InsertChar PROC, stringPtr: DWORD, char: BYTE, pos:DWORD
         .if pos > eax
             jmp quit
         .endif
-        inc eax                 ;eax = new length, ebx = new bufferlength
+        inc eax                 ;eax = new length, ebx = new bufferLength
         .if eax == ebx                   
             add ebx, ebx
             pushad
@@ -303,6 +303,48 @@ quit:
     ret
 DestroyString ENDP
 
-END main
-
-
+ConcatString PROC, pstring_source:DWORD, pstring_dest:DWORD
+	LOCAL data_length_new:DWORD, buffer_length_new:DWORD
+	mov esi, pstring_source
+	mov edi, pstring_dest
+	mov eax, (String PTR [esi]).dataLength
+	add eax, (String PTR [edi]).dataLength
+	mov ebx, (String PTR [edi]).bufferLength
+	mov_m2m buffer_length_new, (String PTR [edi]).bufferLength
+	mov data_length_new, eax
+	;note the char after string[dataLength] is 0
+	.IF eax >= ebx
+		add, ebx, ebx	;bufferLength *= 2
+		mov buffer_length_new, ebx
+		invoke crt_malloc, ebx
+		;copy content from p_string_dest->string to newly allocated spaces
+		mov edi, eax
+		mov esi, pstring_dest
+		mov ecx, (String PTR [esi]).dataLength
+		mov esi, (String PTR [esi]).string
+		cld
+		rep movsb
+		;free original spaces
+		mov esi, pstring_dest
+		mov esi, (String PTR [esi]).string
+		invoke crt_free, esi
+		;resume
+		mov edi, pstring_dest
+		mov esi, pstring_source
+		;update bufferLength
+		mov_m2m (String PTR [esi]).bufferLength, buffer_length_new
+	.ENDIF
+	;copy from source to dest
+	mov ecx, (String PTR [esi]).dataLength
+	mov esi, (String PTR [esi]).string
+	mov eax, (String PTR [edi]).dataLength
+	mov edi, (String PTR [edi]).string
+	add edi, eax
+	cld
+	rep movsb
+	;update dataLength
+	mov edi, pstring_dest
+	mov (String PTR [edi]).dataLength, data_length_new
+	ret
+ConcatString ENDP
+END

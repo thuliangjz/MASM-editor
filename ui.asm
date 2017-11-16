@@ -4,9 +4,7 @@ option casemap:none
 
 include ui.inc
 include utils.inc
-
 .data
-text_list LinkedList <>
 window_size COORD <>
 cursor_position_ui COORD <>
 cursor_position_logic CURSOR_POSITION_LOGIC <> 
