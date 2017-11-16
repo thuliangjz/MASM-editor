@@ -24,10 +24,10 @@ GetUserKeyInput PROC
 		loop_start:
 			cmp (INPUT_RECORD PTR [esi]).EventType, KEY_EVENT
 			jne loop_prepare
-			;Ö»´¦Àí°´ÏÂÊ±µÄÊÂ¼þ
+			;åªå¤„ç†æŒ‰ä¸‹æ—¶çš„äº‹ä»¶
 			cmp (INPUT_RECORD PTR [esi]).KeyEvent.bKeyDown, TRUE
 			jne loop_prepare
-			;ÌØ¶¨µÄ¼ü²»Òª
+			;ç‰¹å®šçš„é”®ä¸è¦
 			mov bx, (INPUT_RECORD PTR [esi]).KeyEvent.wVirtualKeyCode
 			cmp bx, VK_SHIFT
 			je loop_prepare
@@ -41,17 +41,17 @@ GetUserKeyInput PROC
 			je loop_prepare
 			cmp bx, VK_RCONTROL
 			je loop_prepare
-			;²»ÒªF1~F20
+			;ä¸è¦F1~F20
 			.IF bx >= 070h && bx <= 087h
 				jmp loop_prepare
 			.ENDIF
-			;½«¼ÇÂ¼·ÅÈë¶ÓÁÐ
+			;å°†è®°å½•æ”¾å…¥é˜Ÿåˆ—
 			invoke PushKeyInput, esi
 			mov flag_success, TRUE
 		loop_prepare:
 			add esi, SIZEOF INPUT_RECORD
 			loop loop_start
-		;Èç¹ûÃ»ÓÐÓÐÐ§µÄ×Ö·ûÔò¼ÌÐø¶ÁÈ¡
+		;å¦‚æžœæ²¡æœ‰æœ‰æ•ˆçš„å­—ç¬¦åˆ™ç»§ç»­è¯»å–
 		cmp flag_success, TRUE
 		jne get_raw_input
 		ret
@@ -65,7 +65,7 @@ InitInputQueue ENDP
 
 PushKeyInput PROC USES eax ebx edi, p_key_input:DWORD
 	LOCAL is_special:DWORD
-	;¼ìÑéÊÇ·ñÎªÌØÊâ×Ö·û
+	;æ£€éªŒæ˜¯å¦ä¸ºç‰¹æ®Šå­—ç¬¦
 	mov ebx, p_key_input
 	mov ax, (INPUT_RECORD PTR [ebx]).KeyEvent.wVirtualKeyCode
 	.IF (ax >= VK_LEFT && ax <= VK_DOWN) || (ax == VK_BACK) || (ax == VK_DELETE) || (ax == VK_DELETE)
@@ -73,7 +73,7 @@ PushKeyInput PROC USES eax ebx edi, p_key_input:DWORD
 	.ELSE
 		mov is_special, FALSE
 	.ENDIF
-	;¸³Öµ
+	;èµ‹å€¼
 	mov edi, OFFSET _user_input_que
 	add edi, _que_tail
 	mov ebx, is_special
@@ -83,7 +83,7 @@ PushKeyInput PROC USES eax ebx edi, p_key_input:DWORD
 	mov (KEY_INPUT PTR [edi]).virtual_key, bx
 	mov bh, (INPUT_RECORD PTR [eax]).KeyEvent.AsciiChar
 	mov (KEY_INPUT PTR [edi]).ascii_char, bh
-	;¸üÐÂ¶ÓÁÐÖ¸Õë
+	;æ›´æ–°é˜Ÿåˆ—æŒ‡é’ˆ
 	add _que_tail, SIZEOF KEY_INPUT
 	mov eax, SIZEOF _user_input_que
 	.IF (eax <= _que_tail)
@@ -115,7 +115,7 @@ PopInputQueue PROC, p_key_input:DWORD
 	.IF eax == 1
 		ret
 	.ENDIF
-	;Èç¹û³É¹¦Ôò¸üÐÂÍ·Ö¸Õë
+	;å¦‚æžœæˆåŠŸåˆ™æ›´æ–°å¤´æŒ‡é’ˆ
 	add _que_head, SIZEOF KEY_INPUT
 	.IF _que_head > SIZEOF _user_input_que
 		mov _que_head, 0

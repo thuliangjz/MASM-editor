@@ -23,13 +23,14 @@ LinkedList ENDS
 
 
 
-
+;create the head node of the list and initial currentNode and listLength
 InitList PROTO, 
     listPtr: DWORD
 
 InsertNode PROTO,
     listPtr: DWORD 
 
+;delete currentNode and currentNode will be the next node, if doesn't have next node ,currentNode will be the prev node
 DeleteNode PROTO,
     listPtr: DWORD  
 
