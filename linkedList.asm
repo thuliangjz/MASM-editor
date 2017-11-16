@@ -7,11 +7,8 @@ include linkedList.inc
 include windows.inc
 include kernel32.inc
 include msvcrt.inc
-<<<<<<< HEAD
 include utils.inc
-=======
 include masm32.inc
->>>>>>> 6c427a733615c38d7b5c45a0e9aa9b030510d351
 
 BUFFER_INIT_LENGTH EQU 100
 endl EQU <0dh, 0ah>
@@ -237,7 +234,6 @@ quit:
     ret
 DestroyString ENDP
 
-<<<<<<< HEAD
 ConcatString PROC, pstring_source:DWORD, pstring_dest:DWORD
 	LOCAL data_length_new:DWORD, buffer_length_new:DWORD
 	mov esi, pstring_source
@@ -283,8 +279,3 @@ ConcatString PROC, pstring_source:DWORD, pstring_dest:DWORD
 	ret
 ConcatString ENDP
 END
-=======
-END
-
-
->>>>>>> 6c427a733615c38d7b5c45a0e9aa9b030510d351
