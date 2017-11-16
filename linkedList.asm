@@ -64,6 +64,13 @@ InsertNode PROC, listPtr: DWORD
     ret
 InsertNode ENDP
 
+FreeNode PROC, p_node:DWORD
+    mov eax, p_node.data.string
+    invoke crt_free, eax
+    invoke crt_free, p_node
+    ret
+FreeNode ENDP
+
 DeleteNode PROC, listPtr: DWORD 
     
     pushad
@@ -79,7 +86,7 @@ DeleteNode PROC, listPtr: DWORD
             mov eax, thisNode.prev 
             
             pushad
-                invoke crt_free, esi
+                invoke FreeNode, esi
             popad
 
             mov esi, eax
@@ -93,7 +100,7 @@ DeleteNode PROC, listPtr: DWORD
         mov eax, thisNode.prev
         mov ebx, thisNode.next
         pushad
-            invoke crt_free, esi
+            invoke FreeNode, esi
         popad
         mov esi, eax                
         mov thisNode.next, ebx  ;thisNode == currentNode.prev    
@@ -236,6 +243,7 @@ DestroyString ENDP
 
 ConcatString PROC, pstring_source:DWORD, pstring_dest:DWORD
 	LOCAL data_length_new:DWORD, buffer_length_new:DWORD
+    pushad
 	mov esi, pstring_source
 	mov edi, pstring_dest
 	mov eax, (String PTR [esi]).dataLength
@@ -276,6 +284,7 @@ ConcatString PROC, pstring_source:DWORD, pstring_dest:DWORD
 	;update dataLength
 	mov edi, pstring_dest
 	mov (String PTR [edi]).dataLength, data_length_new
+    popad
 	ret
 ConcatString ENDP
 END
