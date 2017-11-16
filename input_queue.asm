@@ -16,6 +16,10 @@ _que_tail DWORD 0
 .code
 GetUserKeyInput PROC
 	LOCAL flag_success:DWORD
+	mov eax, _que_tail
+	.IF eax != _que_tail
+		ret
+	.ENDIF
 	get_raw_input:
 		invoke ReadConsoleInput, _std_in, addr _raw_input_que, LENGTHOF _raw_input_que, addr _count_event_read
 		mov ecx, _count_event_read
@@ -68,7 +72,7 @@ PushKeyInput PROC USES eax ebx edi, p_key_input:DWORD
 	;检验是否为特殊字符
 	mov ebx, p_key_input
 	mov ax, (INPUT_RECORD PTR [ebx]).KeyEvent.wVirtualKeyCode
-	.IF (ax >= VK_LEFT && ax <= VK_DOWN) || (ax == VK_BACK) || (ax == VK_DELETE) || (ax == VK_DELETE)
+	.IF (ax >= VK_LEFT && ax <= VK_DOWN) || (ax == VK_BACK) || (ax == VK_DELETE) || (ax == VK_RETURN)
 		mov is_special, TRUE
 	.ELSE
 		mov is_special, FALSE
@@ -101,7 +105,7 @@ PeekInputQueue PROC USES esi ebx, p_key_input:DWORD
 	add esi, _que_head
 	mov eax, p_key_input
 	mov ebx, (KEY_INPUT PTR [esi]).is_special
-	mov (KEY_INPUT PTR [esi]).is_special, ebx
+	mov (KEY_INPUT PTR [eax]).is_special, ebx
 	mov bx, (KEY_INPUT PTR [esi]).virtual_key
 	mov (KEY_INPUT PTR [eax]).virtual_key, bx
 	mov bh, (KEY_INPUT PTR [esi]).ascii_char
