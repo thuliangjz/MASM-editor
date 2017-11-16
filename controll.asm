@@ -53,16 +53,10 @@ EditingStatusHandle PROC
         invoke SpecialKeyDeal, key_input
     .endif
 
-
-
-
-
     ;need redraw here
 quit:
     popad
     ret
-
-
 
 EditingStatusHandle ENDP
 
@@ -78,13 +72,13 @@ NormalKeyDeal PROC, key_input: KEY_INPUT
         inc cursor_position_logic.index_char
         mov ax, window_size.x
         mov bx, window_size.y
+        inc cursor_position_ui.x
         .if ax == cursor_position_ui.x
             mov cursor_position_ui.x, 0
-            .if bx > cursor_position_ui.y
-                inc cursor_position_ui.y
+            inc cursor_position_ui.y
+            .if bx == cursor_position_ui.y
+                dec cursor_position_ui.y
             .endif
-        .else
-            inc cursor_position_ui.x
         .endif
 
     popad
