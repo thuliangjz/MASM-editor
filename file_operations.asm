@@ -25,7 +25,7 @@ nextPlace DWORD 0
 bytes_read DWORD 0
 bytes_write DWORD 0
 endlStr db 0dh, 0ah, 0
-
+p_file_name2 db "test_output.txt", 0
 
 .code
 FindEndl PROC
@@ -51,11 +51,12 @@ quit:
 FindEndl ENDP
 
 
-
+;return 1 if cannot open the file, 0 if open successful
 ReadFileToList PROC,  p_file_name: DWORD
     local  file_handle, error_code
     pushad
         ;init list first
+
         invoke InitList, ADDR text_list
         
         invoke CreateFile, p_file_name, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0
@@ -74,9 +75,9 @@ ReadFileToList PROC,  p_file_name: DWORD
             mov esi, text_list.currentNode
             mov cursor_position_logic.p_node, esi
             mov cursor_position_logic.index_char, 0        
-            
-            jmp quit
-
+            popad
+            mov eax, 1   ;return 1 if cannot open the file
+            ret
         .endif
         
         ;create a new node
@@ -138,10 +139,10 @@ ReadFileToList PROC,  p_file_name: DWORD
                     .endif
                 popad
 
-                mov eax,(Node PTR[esi]).data.dataLength
+                mov eax, (Node PTR[esi]).data.dataLength
                 add esi, eax
                 mov edi, esi
-                
+                mov edi, (Node PTR[edi]).data.string
                 push edi
                 mov esi, OFFSET read_buffer
                 add esi, nowPlace
@@ -155,6 +156,11 @@ ReadFileToList PROC,  p_file_name: DWORD
                 
                 mov edi, text_list.currentNode
                 add (Node PTR[edi]).data.dataLength, ebx
+                
+                mov eax, nextPlace
+                .if eax >= bytes_read
+                    jmp readfileloop
+                .endif
                 
                 invoke InsertNode, addr text_list
                 mov eax, nextPlace
@@ -177,15 +183,17 @@ ReadFileToList PROC,  p_file_name: DWORD
         invoke CloseHandle, file_handle   
 quit:
     popad
+    mov eax, 0; 0:file exists
     ret
 ReadFileToList ENDP
 
 WriteListToFile PROC, p_file_name: DWORD
     local file_handle
     pushad
-        invoke CreateFile, addr p_file_name, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0
-        mov file_handle, eax
+        invoke CreateFile, p_file_name, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0
 
+    ;comment ~    
+        mov file_handle, eax
         mov esi, text_list.head
         mov esi, (Node PTR[esi]).next
         .if esi == 0
@@ -219,6 +227,7 @@ WriteListToFile PROC, p_file_name: DWORD
             pop esi
         .endif
         invoke CloseHandle, file_handle 
+    ;~
         
     popad
     ret
