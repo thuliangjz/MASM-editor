@@ -18,6 +18,7 @@ process_result_length DWORD ?
 _command_arg BYTE MAXLENGTH DUP(?)
 _response_file_save BYTE 'file saved as %s', 0
 _response_file_open BYTE 'open file %s', 0
+_response_file_open_fail BYTE 'failed to open file', 0
 _response_unknow_command BYTE 'unknown command', 0
 .code
 
@@ -176,7 +177,6 @@ AddACharFromConsole ENDP
 ; :q     退出，如果对缓冲区进行过修改，则会提示
 ; :e     打开文件
 ProcessCommand PROC
-	; 单指令 w 和 q
 	mov esi, OFFSET console_input_string
 	.IF (BYTE PTR [esi]) == 'w'
 		invoke CopyArg
@@ -192,11 +192,19 @@ ProcessCommand PROC
 		;调用打开函数
 		invoke DestroyList, addr text_list
 		invoke ReadFileToList, addr _command_arg
-		pushad
-		invoke crt_sprintf, addr process_result, addr _response_file_open, OFFSET _command_arg
-		invoke crt_strlen, addr process_result
-		mov process_result_length, eax
-		popad
+		.IF eax == FALSE
+			pushad
+			invoke crt_sprintf, addr process_result, addr _response_file_open, OFFSET _command_arg
+			invoke crt_strlen, addr process_result
+			mov process_result_length, eax
+			popad
+		.ELSE
+			pushad
+			invoke crt_sprintf, addr process_result, addr _response_file_open_fail
+			invoke crt_strlen, addr process_result
+			mov process_result_length, eax
+			popad
+		.ENDIF
 	.ELSEIF BYTE PTR [esi] == 'q'
 		;直接退出
 		invoke ExitProcess, 0

@@ -36,6 +36,7 @@ Render PROC
     LOCAL cursor_pos:COORD
     mov command_pos.x, 0
     mov_m2m command_pos.y, window_size.y
+    invoke DrawText
     .IF _status == MODE_VIEW
         .IF _show_command_result == TRUE
             ;绘制命令处理结果
@@ -57,7 +58,6 @@ Render PROC
         invoke WriteConsoleOutputCharacter, hNewScreenBuffer,addr console_input_string,
             console_input_string_length, DWORD PTR [command_pos], eax
     .ENDIF
-        invoke DrawText
         invoke SetConsoleCursorPosition, hNewScreenBuffer, DWORD PTR [cursor_pos]
         ret
 Render ENDP

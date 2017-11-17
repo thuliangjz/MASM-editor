@@ -24,7 +24,6 @@ UIInit PROC, hScreenBuffer:HANDLE
 	inc window_size.y
 	mov_m2m _hOutputBuffer, hScreenBuffer
 	mov ax, window_size.y
-	sub ax, blank_line_command
 	mul window_size.x
 	mov _count_text_screen, eax
 	sub window_size.y, blank_line_command
