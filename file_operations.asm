@@ -2,9 +2,13 @@
 .model flat, stdcall                    ; 32 bit memory model
 option casemap :none                    ; case sensitive
 
-include controll.inc
-include linkedList.inc
+include control.inc
 include ui.inc
+include windows.inc
+include kernel32.inc
+include msvcrt.inc
+include utils.inc
+include masm32.inc
 
 includelib masm32.lib
 includelib kernel32.lib
@@ -54,7 +58,7 @@ ReadFileToList PROC,  p_file_name: DWORD
         ;init list first
         invoke InitList, ADDR text_list
         
-        invoke CreateFile, addr name_file, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0
+        invoke CreateFile, p_file_name, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0
         mov file_handle, eax
         
         invoke GetLastError
@@ -85,7 +89,7 @@ ReadFileToList PROC,  p_file_name: DWORD
         invoke ReadFile, file_handle, addr read_buffer, BUFFER_SIZE, ADDR bytes_read, NULL
         .if bytes_read == 0
             jmp readfileFinish
-
+        .endif
         ;init two places        
         mov nowPlace, 0
         mov nextPlace, 0
@@ -179,16 +183,17 @@ ReadFileToList ENDP
 WriteListToFile PROC, p_file_name: DWORD
     local file_handle
     pushad
-        invoke CreateFile, addr name_file, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0
+        invoke CreateFile, addr p_file_name, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0
         mov file_handle, eax
 
         mov esi, text_list.head
-        .if (Node PTR[esi]).next == 0
-            jmp writeToFileFinish
         mov esi, (Node PTR[esi]).next
+        .if esi == 0
+            jmp writeToFileFinish
+        .endif
     writeToFileLoop:
         push esi
-            invoke WriteFile, file_handle,  (Node PTR[esi]).data.string, (Node PTR[esi]).dataLength, addr bytes_write, NULL
+            invoke WriteFile, file_handle,  (Node PTR[esi]).data.string, (Node PTR[esi]).data.dataLength, addr bytes_write, NULL
         pop esi
         ;write the 0dh, 0ah
         push esi
@@ -199,8 +204,9 @@ WriteListToFile PROC, p_file_name: DWORD
         .if esi == 0
             jmp writeToFileFinish
         .endif
-
-        .if (Node PTR[esi]).next == 0
+        
+        mov ebx, (Node PTR[esi]).next
+        .if ebx == 0
             jmp writeToFileFinish
         .else
             jmp writeToFileLoop
@@ -209,7 +215,7 @@ WriteListToFile PROC, p_file_name: DWORD
     writeToFileFinish:
         .if esi != 0
             push esi
-                invoke WriteFile, file_handle,  (Node PTR[esi]).data.string, (Node PTR[esi]).dataLength, addr bytes_write, NULL
+                invoke WriteFile, file_handle,  (Node PTR[esi]).data.string, (Node PTR[esi]).data.dataLength, addr bytes_write, NULL
             pop esi
         .endif
         invoke CloseHandle, file_handle 
@@ -219,3 +225,5 @@ WriteListToFile PROC, p_file_name: DWORD
 
 
 WriteListToFile ENDP 
+
+END

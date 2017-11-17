@@ -2,7 +2,7 @@
 .model flat, stdcall                    ; 32 bit memory model
 option casemap :none                    ; case sensitive
 
-include controll.inc
+include control.inc
 include key_handlers.inc
 include input_queue.inc
 include ui.inc
