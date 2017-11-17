@@ -27,6 +27,7 @@ UIInit PROC, hScreenBuffer:HANDLE
 	sub ax, blank_line_command
 	mul window_size.x
 	mov _count_text_screen, eax
+	sub window_size.y, blank_line_command
 	ret
 UIInit ENDP
 

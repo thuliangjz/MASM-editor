@@ -197,15 +197,15 @@ InsertChar PROC, stringPtr: DWORD, char_inserted: BYTE, pos:DWORD
         add esi, (String PTR [eax]).dataLength
         ;edi指向末尾后一个
         mov edi, esi
-        inc edi
+        dec esi
         ;ecx = dataLength - pos
         mov ecx, (String PTR [eax]).dataLength
         sub ecx, pos
         std
         rep movsb
-        mov al, char_inserted
+        mov bl, char_inserted
         ;赋值
-        mov [esi], al
+        mov [edi], bl
         ;更新长度
         inc (String PTR [edx]).dataLength 
 quit:

@@ -181,7 +181,6 @@ LeftKeyHandler ENDP
 
 RightKeyHandler PROC 
     pushad
-        mov record_cursor_max_index, 0
         mov edi, cursor_position_logic.p_node
         mov ebx, (Node PTR [edi]).data.dataLength
 
@@ -203,7 +202,7 @@ RightKeyHandler PROC
         
         .else
             ;if cursor is at the end of logic line
-            mov esi, (Node PTR[esi]).next
+            mov esi, (Node PTR[edi]).next
             .if esi == NULL
                 jmp quit
             .endif
@@ -217,6 +216,8 @@ RightKeyHandler PROC
             .endif
 
         .endif
+        ;对于所有合法的移动record_cursor_max_index 置为0
+        mov record_cursor_max_index, 0
 quit:
     popad
     ret
@@ -303,14 +304,16 @@ invoke LeftKeyHandler
 ;删除文本
 mov ebx, cursor_prev.p_node
 mov eax, (Node PTR [ebx]).prev
-.IF cursor_position_logic.index_char != 0
+.IF cursor_prev.index_char != 0
     ;只需删除文字
     lea eax, (Node PTR [ebx]).data
-    invoke DeleteChar, eax, cursor_prev.index_char
+    mov ecx, cursor_prev.index_char
+    dec ecx
+    invoke DeleteChar, eax, ecx
 .ELSEIF eax != text_list.head
     ;合并字符串
     lea esi, (Node PTR [ebx]).data
-    lea edi, (Node PTR [ebx]).data
+    lea edi, (Node PTR [eax]).data
     invoke ConcatString, esi, edi
     ;删除之前所在的行
     mov_m2m text_list.currentNode, cursor_prev.p_node
@@ -348,13 +351,12 @@ EnterHandler ENDP
 DeleteHandler PROC
     mov eax, cursor_position_logic.p_node   ;以下eax均表示当前所处结点的值
     mov ecx, (Node PTR [eax]).data.dataLength   ;ecx记录最大字符串索引
+    mov edx, (Node PTR [eax]).next
     .IF ecx > cursor_position_logic.index_char
-        ;只需删除后面一个字符
+        ;只需删除当前字符
         mov ebx, cursor_position_logic.index_char
-        inc ebx
         lea esi, (Node PTR [eax]).data
         invoke DeleteChar, esi, ebx
-    mov edx, (Node PTR [eax]).next
     .ELSEIF edx != 0
         ;合并后一个结点
         mov esi, (Node PTR [eax]).next
