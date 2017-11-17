@@ -116,6 +116,32 @@ quit:
     ret
 DeleteNode ENDP
 
+DestroyList PROC, listPtr: DWORD
+
+    pushad
+        mov edi, listPtr
+        mov esi, (LinkedList PTR [edi]).head
+        mov ebx, (Node PTR [esi]).next
+        .if ebx != 0
+            mov (LinkedList PTR[edi]).currentNode, ebx
+            mov ecx, (LinkedList PTR[edi]).listLength
+        deleteNodeLoop:
+            invoke DeleteNode, listPtr
+            loop deleteNodeLoop
+        .endif
+        
+        push esi
+            invoke crt_free, (Node PTR[esi]).data.string
+        pop esi 
+
+        invoke crt_free, esi
+        
+
+    popad
+    ret
+DestroyList ENDP
+
+
 
 InitString PROC, stringPtr: DWORD
     pushad

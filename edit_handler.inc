@@ -5,6 +5,7 @@ include ui.inc
 include control.inc
 include utils.inc
 include linkedList.inc
+include file_operations.inc
 
 EditHandler PROTO STDCALL input:KEY_INPUT
 ENDIF

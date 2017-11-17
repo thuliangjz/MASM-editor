@@ -34,6 +34,9 @@ InsertNode PROTO,
 DeleteNode PROTO,
     listPtr: DWORD  
 
+DestroyList PROTO,
+    listPtr: DWORD
+
 InitString PROTO, 
     stringPtr: DWORD
 
