@@ -3,7 +3,7 @@ CONTROLL equ <1>
 
 include linkedList.inc
 EXTERNDEF text_list:LinkedList
-
+comment~
 keyInputHandle PROTO
 
 EditingStatusHandle PROTO
@@ -14,7 +14,7 @@ NormalKeyDeal PROTO,
 
 SpecialKeyDeal PROTO, 
     key_input: KEY_INPUT
-
+~
 
 ENDIF
 

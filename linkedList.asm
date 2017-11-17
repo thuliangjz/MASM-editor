@@ -154,70 +154,60 @@ InitString PROC, stringPtr: DWORD
     ret
 InitString ENDP
 
-InsertChar PROC, stringPtr: DWORD, char: BYTE, pos:DWORD
+InsertChar PROC, stringPtr: DWORD, char_inserted: BYTE, pos:DWORD
     LOCAL tmpStr
     LOCAL tmpStrHead
     LOCAL i
+    LOCAL original_str
+    LOCAL origin_buffer_length
     pushad
         mov i, 0
-        mov edi, stringPtr
-        mov esi, (String PTR [edi]).string
-        mov eax, (String PTR [edi]).dataLength
-        mov ebx, (String PTR [edi]).bufferLength
+        mov edx, stringPtr
+        mov eax, (String PTR [edx]).dataLength
+        mov ebx, (String PTR [edx]).bufferLength
+        mov origin_buffer_length, ebx
+        mov_m2m original_str, (String PTR [edx]).string
         .if pos > eax
             jmp quit
         .endif
         inc eax                 ;eax = new length, ebx = new bufferLength
+        ;如果数组不够长则扩大数组
         .if eax == ebx                   
             add ebx, ebx
             pushad
                 invoke crt_malloc, ebx
                 mov tmpStr, eax
-                mov tmpStrHead, eax
             popad
-            mov ecx, eax
-            inc ecx
-            push eax
-            mov eax, pos
-        copystr:
-            .if i == eax 
-                mov dl, char
-                mov BYTE PTR [tmpStr], dl
-                inc tmpStr
-                inc i
-            .else
-                mov dl, BYTE PTR [esi]
-                mov BYTE PTR [tmpStr], dl
-                inc esi
-                inc tmpStr
-                inc i
-            .endif
-            loop copystr
-            pop eax
-
+            ;复制数组
+            mov ecx, (String PTR [edx]).bufferLength
+            mov edi, tmpStr
+            mov esi, original_str
+            cld
+            rep movsb
             pushad
-                invoke crt_free, esi
+                invoke crt_free, original_str
             popad
-            mov esi, tmpStrHead
-            mov (String PTR [edi]).string, esi
-            mov (String PTR [edi]).dataLength,eax
-            mov (String PTR [edi]).bufferLength, ebx
-
-        .else
-            mov ecx, eax
-            sub ecx, pos
-            add esi, eax
-        copystr2:
-            mov dl, BYTE PTR[esi - 1]
-            mov BYTE PTR [esi], dl
-            dec esi
-            loop copystr2
-
-            mov dl, char
-            mov BYTE PTR [esi], dl
-            mov (String PTR [edi]).dataLength,eax
+            mov_m2m (String PTR [edx]).string, tmpStr
+            mov (String PTR [edx]).bufferLength, ebx
         .endif
-    
+        ;插入字符
+        mov eax, stringPtr
+        ;esi 指向字符串末尾
+        mov esi, (String PTR [eax]).string
+        add esi, (String PTR [eax]).dataLength
+        ;edi指向末尾后一个
+        mov edi, esi
+        inc edi
+        ;ecx = dataLength - pos
+        mov ecx, (String PTR [eax]).dataLength
+        sub ecx, pos
+        std
+        rep movsb
+        mov al, char_inserted
+        ;赋值
+        mov [esi], al
+        ;更新长度
+        inc (String PTR [edx]).dataLength 
 quit:
     popad
     ret
@@ -278,11 +268,10 @@ ConcatString PROC, pstring_source:DWORD, pstring_dest:DWORD
 	mov data_length_new, eax
 	;note the char after string[dataLength] is 0
 	.IF eax >= ebx
-        mov ebx, eax
-		add, ebx, ebx	;bufferLength *= 2
-		mov buffer_length_new, ebx
-		invoke crt_malloc, ebx
-        push eax  ;push新申请的空间
+		add eax, eax	;bufferLength *= 2
+		mov buffer_length_new, eax
+		invoke crt_malloc, eax
+        push eax
 		;copy content from p_string_dest->string to newly allocated spaces
 		mov edi, eax
 		mov esi, pstring_dest
@@ -297,7 +286,8 @@ ConcatString PROC, pstring_source:DWORD, pstring_dest:DWORD
 		;resume
 		mov edi, pstring_dest
 		mov esi, pstring_source
-        pop (String PTR[edi]).string ;保存新申请的空间到string里
+        ;保存新申请的空间到pstring_dest->string上
+        pop (String PTR [edi]).string
 		;update bufferLength
 		mov_m2m (String PTR [esi]).bufferLength, buffer_length_new
 	.ENDIF
@@ -311,7 +301,7 @@ ConcatString PROC, pstring_source:DWORD, pstring_dest:DWORD
 	rep movsb
 	;update dataLength
 	mov edi, pstring_dest
-	mov (String PTR [edi]).dataLength, data_length_new
+	mov_m2m (String PTR [edi]).dataLength, data_length_new
     popad
 	ret
 ConcatString ENDP

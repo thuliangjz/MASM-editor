@@ -6,7 +6,9 @@ include masm32.inc
 KEY_INPUT STRUCT
   is_special BOOL ?
   virtual_key WORD ?	;see wVirtualKeyCode field in KEY_EVENT_RECORD
+  ALIGN DWORD
   ascii_char BYTE ?
+  ALIGN DWORD
 KEY_INPUT ENDS
 GetUserKeyInput PROTO STDCALL
 InitInputQueue PROTO STDCALL
