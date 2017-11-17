@@ -1,7 +1,7 @@
 IFNDEF CONTROLL
 CONTROLL equ <1>
 
-
+include linkedList.inc
 EXTERNDEF text_list:LinkedList
 
 keyInputHandle PROTO

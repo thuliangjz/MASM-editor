@@ -65,7 +65,8 @@ InsertNode PROC, listPtr: DWORD
 InsertNode ENDP
 
 FreeNode PROC, p_node:DWORD
-    mov eax, p_node.data.string
+    mov esi, p_node
+    mov eax, (Node PTR [esi]).data.string
     invoke crt_free, eax
     invoke crt_free, p_node
     ret
@@ -114,6 +115,30 @@ quit:
     popad
     ret
 DeleteNode ENDP
+
+DestroyList PROC, listPtr: DWORD
+
+    pushad
+        mov edi, listPtr
+        mov esi, (List PTR[edi]).head
+
+        .if (Node PTR [esi]).next != 0
+            mov eax, (Node PTR[esi]).next
+            mov (List PTR[edi]).currentNode, eax
+            mov ecx, (List PTR[edi]).listLength
+        deleteNodeLoop:
+            invoke DeleteNode, listPtr
+            loop deleteNodeLoop
+        .endif
+        
+        pushad
+            invoke crt_free, esi
+        popad
+
+    popad
+    ret
+DestroyList ENDP
+
 
 
 InitString PROC, stringPtr: DWORD
@@ -253,9 +278,11 @@ ConcatString PROC, pstring_source:DWORD, pstring_dest:DWORD
 	mov data_length_new, eax
 	;note the char after string[dataLength] is 0
 	.IF eax >= ebx
+        mov ebx, eax
 		add, ebx, ebx	;bufferLength *= 2
 		mov buffer_length_new, ebx
 		invoke crt_malloc, ebx
+        push eax  ;push新申请的空间
 		;copy content from p_string_dest->string to newly allocated spaces
 		mov edi, eax
 		mov esi, pstring_dest
@@ -270,6 +297,7 @@ ConcatString PROC, pstring_source:DWORD, pstring_dest:DWORD
 		;resume
 		mov edi, pstring_dest
 		mov esi, pstring_source
+        pop (String PTR[edi]).string ;保存新申请的空间到string里
 		;update bufferLength
 		mov_m2m (String PTR [esi]).bufferLength, buffer_length_new
 	.ENDIF

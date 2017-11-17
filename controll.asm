@@ -1,4 +1,4 @@
-.386                                    ; create 32 bit code
+.486                                    ; create 32 bit code
 .model flat, stdcall                    ; 32 bit memory model
 option casemap :none                    ; case sensitive
 
@@ -6,7 +6,7 @@ include controll.inc
 include key_handlers.inc
 include input_queue.inc
 include ui.inc
-include linkedList.inc
+
 
 includelib masm32.lib
 includelib kernel32.lib
