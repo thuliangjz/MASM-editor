@@ -17,6 +17,7 @@ process_result_length DWORD ?
 
 _command_arg BYTE MAXLENGTH DUP(?)
 _response_file_save BYTE 'file saved as %s', 0
+_response_file_save_fail BYTE 'failed to save file', 0
 _response_file_open BYTE 'open file %s', 0
 _response_file_open_fail BYTE 'failed to open file', 0
 _response_unknow_command BYTE 'unknown command', 0
@@ -182,17 +183,25 @@ ProcessCommand PROC
 		invoke CopyArg
 		;调用保存函数
 		invoke WriteListToFile, addr _command_arg
-		pushad
-		invoke crt_sprintf, addr process_result, addr _response_file_save, OFFSET _command_arg
-		invoke crt_strlen, addr process_result
-		mov process_result_length, eax
-		popad	
+		.IF eax == 0
+			pushad
+			invoke crt_sprintf, addr process_result, addr _response_file_save, OFFSET _command_arg
+			invoke crt_strlen, addr process_result
+			mov process_result_length, eax
+			popad
+		.ELSE
+		    pushad
+			invoke crt_sprintf, addr process_result, addr _response_file_save_fail, OFFSET _command_arg
+			invoke crt_strlen, addr process_result
+			mov process_result_length, eax
+			popad
+		.ENDIF	
 	.ELSEIF (BYTE PTR [esi]) == 'e'
 		invoke CopyArg
 		;调用打开函数
 		invoke DestroyList, addr text_list
 		invoke ReadFileToList, addr _command_arg
-		.IF eax == FALSE
+		.IF eax == 0
 			pushad
 			invoke crt_sprintf, addr process_result, addr _response_file_open, OFFSET _command_arg
 			invoke crt_strlen, addr process_result
@@ -222,9 +231,11 @@ CopyArg PROC
 	mov edi, OFFSET _command_arg
 	mov esi, OFFSET console_input_string
 	add esi, 2	;假定命令从第二个起
+	.IF console_input_string_length >=2
 	mov ecx, console_input_string_length
 	sub ecx, 2
 	rep movsb
+	.ENDIF
 	mov BYTE PTR [edi], 0
 	ret
 CopyArg ENDP
