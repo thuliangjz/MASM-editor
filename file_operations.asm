@@ -2,9 +2,11 @@
 .model flat, stdcall                    ; 32 bit memory model
 option casemap :none                    ; case sensitive
 
-include controll.inc
+include control.inc
 include linkedList.inc
 include ui.inc
+include msvcrt.inc
+include masm32.inc
 
 includelib masm32.lib
 includelib kernel32.lib
@@ -56,7 +58,7 @@ ReadFileToList PROC,  p_file_name: DWORD
         invoke GetStdHandle, STD_OUTPUT_HANDLE
         mov console_handle_output, eax
        
-        invoke CreateFile, addr name_file, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0
+        invoke CreateFile, p_file_name, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0
         mov file_handle, eax
         
         invoke GetLastError
@@ -87,7 +89,7 @@ ReadFileToList PROC,  p_file_name: DWORD
         invoke ReadFile, file_handle, addr read_buffer, BUFFER_SIZE, ADDR bytes_read, NULL
         .if bytes_read == 0
             jmp readfileFinish
-
+        .endif
         ;init two places        
         mov nowPlace, 0
         mov nextPlace, 0
@@ -179,4 +181,5 @@ quit:
     ret
 ReadFileToList ENDP
 
+END
 
