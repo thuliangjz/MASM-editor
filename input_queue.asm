@@ -121,7 +121,7 @@ PopInputQueue PROC, p_key_input:DWORD
 	.ENDIF
 	;如果成功则更新头指针
 	add _que_head, SIZEOF KEY_INPUT
-	.IF _que_head > SIZEOF _user_input_que
+	.IF _que_head >= SIZEOF _user_input_que
 		mov _que_head, 0
 	.ENDIF
 	ret
