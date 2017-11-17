@@ -138,7 +138,7 @@ ReadFileToList PROC,  p_file_name: DWORD
                         pop (Node PTR[esi]).data.string
                     .endif
                 popad
-                
+
                 mov edi, esi
                 mov edi, (Node PTR[edi]).data.string
                 mov eax, (Node PTR[esi]).data.dataLength
@@ -191,7 +191,11 @@ WriteListToFile PROC, p_file_name: DWORD
     local file_handle
     pushad
         invoke CreateFile, p_file_name, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0
-
+        .if eax == INVALID_HANDLE_VALUE
+            popad
+            mov eax, 1
+            ret
+        .endif
     ;comment ~    
         mov file_handle, eax
         mov esi, text_list.head
@@ -230,6 +234,7 @@ WriteListToFile PROC, p_file_name: DWORD
     ;~
         
     popad
+    mov eax, 0
     ret
 
 
