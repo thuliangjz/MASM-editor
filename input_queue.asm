@@ -13,10 +13,12 @@ _std_in HANDLE ?
 _count_event_read DWORD ?
 _que_head DWORD 0
 _que_tail DWORD 0
+_vk_not_interested WORD VK_SHIFT, VK_LSHIFT, VK_RSHIFT, VK_CONTROL, VK_LCONTROL, 
+	VK_RCONTROL, VK_CAPITAL, VK_END
 .code
 GetUserKeyInput PROC
 	LOCAL flag_success:DWORD
-	mov eax, _que_tail
+	mov eax, _que_head
 	.IF eax != _que_tail
 		ret
 	.ENDIF
@@ -26,27 +28,21 @@ GetUserKeyInput PROC
 		mov flag_success, 0
 		mov esi, OFFSET _raw_input_que
 		loop_start:
+			push ecx
 			cmp (INPUT_RECORD PTR [esi]).EventType, KEY_EVENT
 			jne loop_prepare
 			;只处理按下时的事件
 			cmp (INPUT_RECORD PTR [esi]).KeyEvent.bKeyDown, TRUE
 			jne loop_prepare
 			;特定的键不要
-			mov bx, (INPUT_RECORD PTR [esi]).KeyEvent.wVirtualKeyCode
-			cmp bx, VK_SHIFT
-			je loop_prepare
-			cmp bx, VK_CONTROL
-			je loop_prepare
-			cmp bx, VK_LSHIFT
-			je loop_prepare
-			cmp bx, VK_RSHIFT
-			je loop_prepare
-			cmp bx, VK_LCONTROL
-			je loop_prepare
-			cmp bx, VK_RCONTROL
+			mov ax, (INPUT_RECORD PTR [esi]).KeyEvent.wVirtualKeyCode
+			mov edi, OFFSET _vk_not_interested
+			mov ecx, LENGTHOF _vk_not_interested
+			cld
+			repne scasw
 			je loop_prepare
 			;不要F1~F20
-			.IF bx >= 070h && bx <= 087h
+			.IF ax >= 070h && ax <= 087h
 				jmp loop_prepare
 			.ENDIF
 			;将记录放入队列
@@ -54,6 +50,7 @@ GetUserKeyInput PROC
 			mov flag_success, TRUE
 		loop_prepare:
 			add esi, SIZEOF INPUT_RECORD
+			pop ecx
 			loop loop_start
 		;如果没有有效的字符则继续读取
 		cmp flag_success, TRUE
