@@ -120,20 +120,22 @@ DestroyList PROC, listPtr: DWORD
 
     pushad
         mov edi, listPtr
-        mov esi, (List PTR[edi]).head
-
-        .if (Node PTR [esi]).next != 0
-            mov eax, (Node PTR[esi]).next
-            mov (List PTR[edi]).currentNode, eax
-            mov ecx, (List PTR[edi]).listLength
+        mov esi, (LinkedList PTR [edi]).head
+        mov ebx, (Node PTR [esi]).next
+        .if ebx != 0
+            mov (LinkedList PTR[edi]).currentNode, ebx
+            mov ecx, (LinkedList PTR[edi]).listLength
         deleteNodeLoop:
             invoke DeleteNode, listPtr
             loop deleteNodeLoop
         .endif
         
-        pushad
-            invoke crt_free, esi
-        popad
+        push esi
+            invoke crt_free, (Node PTR[esi]).data.string
+        pop esi 
+
+        invoke crt_free, esi
+        
 
     popad
     ret

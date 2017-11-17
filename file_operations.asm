@@ -2,11 +2,9 @@
 .model flat, stdcall                    ; 32 bit memory model
 option casemap :none                    ; case sensitive
 
-include control.inc
+include controll.inc
 include linkedList.inc
 include ui.inc
-include msvcrt.inc
-include masm32.inc
 
 includelib masm32.lib
 includelib kernel32.lib
@@ -21,6 +19,7 @@ read_buffer db 501 DUP(0)
 nowPlace DWORD 0
 nextPlace DWORD 0
 bytes_read DWORD 0
+bytes_write DWORD 0
 endlStr db 0dh, 0ah, 0
 
 
@@ -42,23 +41,20 @@ FindEndl PROC
         .endif
         jmp findEndlLoop
 
-    quit:
-        popad
-        ret
+quit:
+    popad
+    ret
 FindEndl ENDP
 
 
 
 ReadFileToList PROC,  p_file_name: DWORD
-    local console_handle_output, file_handle, error_code
+    local  file_handle, error_code
     pushad
         ;init list first
         invoke InitList, ADDR text_list
-
-        invoke GetStdHandle, STD_OUTPUT_HANDLE
-        mov console_handle_output, eax
-       
-        invoke CreateFile, p_file_name, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0
+        
+        invoke CreateFile, addr name_file, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0
         mov file_handle, eax
         
         invoke GetLastError
@@ -89,7 +85,7 @@ ReadFileToList PROC,  p_file_name: DWORD
         invoke ReadFile, file_handle, addr read_buffer, BUFFER_SIZE, ADDR bytes_read, NULL
         .if bytes_read == 0
             jmp readfileFinish
-        .endif
+
         ;init two places        
         mov nowPlace, 0
         mov nextPlace, 0
@@ -168,18 +164,58 @@ ReadFileToList PROC,  p_file_name: DWORD
             .endif
 
     readfileFinish:
-        invoke CloseHandle, file_handle    
         mov cursor_position_ui.x, 0
         mov cursor_position_ui.y, 0
         mov esi, text_list.head
         mov esi, (Node PTR [esi]).next
         mov cursor_position_logic.p_node, esi
         mov cursor_position_logic.index_char, 0   
-         
+        invoke CloseHandle, file_handle   
 quit:
     popad
     ret
 ReadFileToList ENDP
 
-END
+WriteListToFile PROC, p_file_name: DWORD
+    local file_handle
+    pushad
+        invoke CreateFile, addr name_file, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0
+        mov file_handle, eax
 
+        mov esi, text_list.head
+        .if (Node PTR[esi]).next == 0
+            jmp writeToFileFinish
+        mov esi, (Node PTR[esi]).next
+    writeToFileLoop:
+        push esi
+            invoke WriteFile, file_handle,  (Node PTR[esi]).data.string, (Node PTR[esi]).dataLength, addr bytes_write, NULL
+        pop esi
+        ;write the 0dh, 0ah
+        push esi
+            invoke WriteFile, file_handle,  addr endlStr, 2, addr bytes_write, NULL
+        pop esi
+        
+        mov esi, (Node PTR[esi]).next
+        .if esi == 0
+            jmp writeToFileFinish
+        .endif
+
+        .if (Node PTR[esi]).next == 0
+            jmp writeToFileFinish
+        .else
+            jmp writeToFileLoop
+        .endif
+
+    writeToFileFinish:
+        .if esi != 0
+            push esi
+                invoke WriteFile, file_handle,  (Node PTR[esi]).data.string, (Node PTR[esi]).dataLength, addr bytes_write, NULL
+            pop esi
+        .endif
+        invoke CloseHandle, file_handle 
+        
+    popad
+    ret
+
+
+WriteListToFile ENDP 
