@@ -10,10 +10,6 @@ include msvcrt.inc
 include utils.inc
 include masm32.inc
 
-includelib masm32.lib
-includelib kernel32.lib
-includelib msvcrt.lib
-
 ;EXTERNDEF text_list:LinkedList
 endl EQU <0dh, 0ah>
 BUFFER_SIZE EQU 500

@@ -2,12 +2,8 @@
 .model flat, stdcall
 option casemap:none
 
-include input_queue.inc
-include utils.inc
-
+include command_handler.inc
 include msvcrt.inc
-include kernel32.inc
-
 MAXLENGTH = 128 ; max length of a console input
 
 .data
@@ -22,13 +18,28 @@ process_result_length DWORD ?
 _command_arg BYTE MAXLENGTH DUP(?)
 _response_file_save BYTE 'file saved as %s', 0
 _response_file_open BYTE 'open file %s', 0
+_response_unknow_command BYTE 'unknown command', 0
 .code
 
+InitCommandHandler PROTO
+AddACharFromConsole PROTO
+AdjustDirectionLeft PROTO
+AdjustDirectionRight PROTO
+CommandBackHandler PROTO
+CommandDeleteHandler PROTO
+ProcessCommand PROTO
+CopyArg PROTO
 ;分发函数 判断字符的类型
 ; case 1:是 "enter"键
 ; case 2:是 左键或者右键
 ; case 3:是 可接收的字符
 ; case 4:其它字符，忽略
+
+InitCommandHandler PROC
+	mov console_cursor_index, 0
+	mov console_input_string_length, 0
+	ret
+InitCommandHandler ENDP
 
 CommandHandler PROC user_input:KEY_INPUT
 ; 不是特殊按键,是可以添加的字符
@@ -48,10 +59,10 @@ CommandHandler PROC user_input:KEY_INPUT
 			Invoke AdjustDirectionRight
 		; 是Backspace键
 		.ELSEIF(key_input.virtual_key == VK_BACK)
-			Invoke BackspaceHandler
+			Invoke CommandBackHandler
 		; 是delete键
 		.ELSEIF(key_input.virtual_key == VK_DELETE)
-			Invoke DeleteHandler
+			Invoke CommandDeleteHandler
 		;是Enter键
 		.ELSEIF(key_input.virtual_key == VK_RETURN)
 			Invoke ProcessCommand
@@ -78,7 +89,7 @@ AdjustDirectionRight PROC
 AdjustDirectionRight ENDP
 
 ; backspace 键逻辑
-BackspaceHandler PROC
+CommandBackHandler PROC
 	mov ebx,console_input_string_length
 	; 在最开头
 	.IF(console_cursor_index == 0)
@@ -104,11 +115,11 @@ BackspaceHandler PROC
 	~
 	.ENDIF
 	ret
-BackspaceHandler ENDP
+CommandBackHandler ENDP
 
 
 ; delete 键逻辑
-DeleteHandler PROC
+CommandDeleteHandler PROC
 	mov ebx,console_input_string_length
 	; 在最右端,无法删除
 	.IF(ebx == console_cursor_index )
@@ -130,7 +141,7 @@ DeleteHandler PROC
 		mov BYTE PTR [esi], 0
 	.ENDIF
 	ret
-PROC
+CommandDeleteHandler ENDP
 
 ; case 4:是 可接收的字符	
 AddACharFromConsole PROC
@@ -170,18 +181,31 @@ ProcessCommand PROC
 	.IF (BYTE PTR [esi]) == 'w'
 		invoke CopyArg
 		;调用保存函数
-		INVOKE crt_sprintf, addr process_result, addr _response_file_save, OFFSET _command_arg
-		INVOKE crt_strlen, addr process_result
-		mov process_result_length, eax	
+		invoke WriteListToFile, addr _command_arg
+		pushad
+		invoke crt_sprintf, addr process_result, addr _response_file_save, OFFSET _command_arg
+		invoke crt_strlen, addr process_result
+		mov process_result_length, eax
+		popad	
 	.ELSEIF (BYTE PTR [esi]) == 'e'
 		invoke CopyArg
 		;调用打开函数
-		INVOKE crt_sprintf, addr process_result, addr _response_file_open, OFFSET _command_arg
-		INVOKE crt_strlen, addr process_result
+		invoke DestroyList, addr text_list
+		invoke ReadFileToList, addr _command_arg
+		pushad
+		invoke crt_sprintf, addr process_result, addr _response_file_open, OFFSET _command_arg
+		invoke crt_strlen, addr process_result
 		mov process_result_length, eax
-	.ELSE (BYTE PTR [esi]) == 'q'
+		popad
+	.ELSEIF BYTE PTR [esi] == 'q'
 		;直接退出
 		invoke ExitProcess, 0
+	.ELSE
+		pushad
+			invoke crt_sprintf, addr process_result, addr _response_unknow_command
+			invoke crt_strlen, addr process_result
+			mov process_result_length, eax
+		popad
 	.ENDIF
 	ret
 ProcessCommand ENDP

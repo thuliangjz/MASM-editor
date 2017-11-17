@@ -4,6 +4,8 @@ option casemap:none
 
 include edit_handler.inc
 include view_handler.inc
+include command_handler.inc
+include ui.inc
 
 includelib msvcrt.lib
 includelib masm32.lib
@@ -23,15 +25,58 @@ input KEY_INPUT <>
 hNewScreenBuffer HANDLE ?
 hStdout HANDLE ?
 _status DWORD MODE_VIEW
+_show_command_result DWORD FALSE
 _cursor_info CONSOLE_CURSOR_INFO <CURSOR_HIGI , TRUE>
 .code
     Dispatch PROTO STDCALL user_input:KEY_INPUT
+
+Render PROC
+    LOCAL command_pos:COORD
+    LOCAL count_write:DWORD
+    LOCAL cursor_pos:COORD
+    mov command_pos.x, 0
+    mov_m2m command_pos.y, window_size.y
+    .IF _status == MODE_VIEW
+        .IF _show_command_result == TRUE
+            ;绘制命令处理结果
+            lea eax, count_write
+            invoke WriteConsoleOutputCharacter, hNewScreenBuffer, 
+                addr process_result, process_result_length,
+                DWORD PTR[command_pos], eax
+        .ENDIF
+        mov_m2m cursor_pos.x, cursor_position_ui.x
+        mov_m2m cursor_pos.y, cursor_position_ui.y
+    .ELSEIF _status == MODE_EDIT
+        mov_m2m cursor_pos.x, cursor_position_ui.x
+        mov_m2m cursor_pos.y, cursor_position_ui.y
+    .ELSE
+        mov eax, console_cursor_index
+        mov cursor_pos.x, ax
+        mov_m2m cursor_pos.y, window_size.y
+        lea eax, count_write
+        invoke WriteConsoleOutputCharacter, hNewScreenBuffer,addr console_input_string,
+            console_input_string_length, DWORD PTR [command_pos], eax
+    .ENDIF
+        invoke DrawText
+        invoke SetConsoleCursorPosition, hNewScreenBuffer, DWORD PTR [cursor_pos]
+        ret
+Render ENDP
 
 Dispatch PROC, user_input:KEY_INPUT
     .IF _status == MODE_VIEW
         .IF user_input.is_special == FALSE && user_input.ascii_char == 'i'
             ;转为编辑状态
             mov _status, MODE_EDIT
+            ;设定光标大小
+            mov _cursor_info.dwSize, CURSOR_LOW
+            invoke SetConsoleCursorInfo, hNewScreenBuffer, addr _cursor_info
+            ;消除命令结果展示
+            mov _show_command_result, FALSE
+        .ELSEIF user_input.is_special == FALSE && user_input.ascii_char == ':'
+            ;转为命令状态
+            mov _status, MODE_COMMAND
+            invoke InitCommandHandler
+            mov _show_command_result, TRUE
             mov _cursor_info.dwSize, CURSOR_LOW
             invoke SetConsoleCursorInfo, hNewScreenBuffer, addr _cursor_info
         .ELSE
@@ -46,11 +91,24 @@ Dispatch PROC, user_input:KEY_INPUT
         .ELSE
             invoke EditHandler, user_input
         .ENDIF
+    .ELSE
+        ;命令处理状态
+        .IF user_input.virtual_key == VK_ESCAPE
+            mov _status, MODE_VIEW
+            mov _cursor_info.dwSize, CURSOR_HIGI
+            invoke SetConsoleCursorInfo, hNewScreenBuffer, addr _cursor_info
+            mov _show_command_result, FALSE
+       .ELSE
+            invoke CommandHandler, user_input
+            .IF user_input.virtual_key == VK_RETURN
+                mov _status, MODE_VIEW
+                mov _cursor_info.dwSize, CURSOR_HIGI
+                invoke SetConsoleCursorInfo, hNewScreenBuffer, addr _cursor_info
+            .ENDIF
+       .ENDIF
     .ENDIF
     ;绘制部分
-    invoke DrawText
-    mov eax, DWORD PTR[cursor_position_ui]
-    invoke SetConsoleCursorPosition, hNewScreenBuffer, eax
+    invoke Render
     ret
 Dispatch ENDP
 
