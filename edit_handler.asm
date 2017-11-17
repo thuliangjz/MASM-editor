@@ -3,7 +3,6 @@
 option casemap:none
 
 include edit_handler.inc
-
 UpKeyHandler PROTO
 
 LeftKeyHandler PROTO
@@ -23,7 +22,7 @@ NormalKeyHandler PROTO, key_input:KEY_INPUT
 record_cursor_max_index DWORD 0
 .code
 ;分发函数
-EditHandler PROC input:KEY_INPUT
+EditHandler PROC, input:KEY_INPUT
 .IF input.is_special == TRUE
     .IF input.virtual_key == VK_LEFT
         invoke LeftKeyHandler

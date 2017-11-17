@@ -1,20 +1,6 @@
 IFNDEF CONTROLL
 CONTROLL equ <1>
-
-
 EXTERNDEF text_list:LinkedList
-comment~
-keyInputHandle PROTO
-
-EditingStatusHandle PROTO
-
-
-NormalKeyDeal PROTO, 
-    key_input: KEY_INPUT
-
-SpecialKeyDeal PROTO, 
-    key_input: KEY_INPUT
-~
-
+include edit_handler.inc
+include view_handler.inc
 ENDIF
-

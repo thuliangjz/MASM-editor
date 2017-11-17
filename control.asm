@@ -1,111 +1,86 @@
-.386                                    ; create 32 bit code
-.model flat, stdcall                    ; 32 bit memory model
-option casemap :none                    ; case sensitive
+.486
+.model flat, stdcall
+option casemap:none
 
-include controll.inc
-include key_handlers.inc
-include input_queue.inc
-include ui.inc
-include linkedList.inc
+include edit_handler.inc
+include view_handler.inc
 
+includelib msvcrt.lib
 includelib masm32.lib
 includelib kernel32.lib
-includelib msvcrt.lib
-
-endl EQU <0dh, 0ah>
 
 .data
-program_status DWORD 0   ;0: watching  1:editing 2:commanding
-record_cursor_max_index DWORD 0
+
+MODE_VIEW equ <0>
+MODE_EDIT equ <1>
+MODE_COMMAND equ <2>
+
+CURSOR_HIGI equ 100
+CURSOR_LOW equ 10
+
 text_list LinkedList <>
+input KEY_INPUT <>
+hNewScreenBuffer HANDLE ?
+hStdout HANDLE ?
+_status DWORD MODE_VIEW
+_cursor_info CONSOLE_CURSOR_INFO <CURSOR_HIGI , TRUE>
+.code
+    Dispatch PROTO STDCALL user_input:KEY_INPUT
 
-keyInputHandle PROC
-    pushad
-    invoke GetUserKeyInput
-    .if eax == 0
-        jmp quit
-    .endif
-
-    .if program_status == 0
-        ;watching
-    .elseif program_status == 1
-        ;editing
-        invoke EditingStatusHandle
-    .else
-        ;commanding
-    .endif
-quit:
-    popad
+Dispatch PROC, user_input:KEY_INPUT
+    .IF _status == MODE_VIEW
+        .IF user_input.is_special == FALSE && user_input.ascii_char == 'i'
+            ;转为编辑状态
+            mov _status, MODE_EDIT
+            mov _cursor_info.dwSize, CURSOR_LOW
+            invoke SetConsoleCursorInfo, hNewScreenBuffer, addr _cursor_info
+        .ELSE
+            invoke ViewKeyHandler, user_input
+        .ENDIF
+    .ELSEIF _status == MODE_EDIT
+        .IF user_input.virtual_key == VK_ESCAPE
+            ;返回浏览模式
+            mov _status, MODE_VIEW
+            mov _cursor_info.dwSize, CURSOR_HIGI
+            invoke SetConsoleCursorInfo, hNewScreenBuffer, addr _cursor_info
+        .ELSE
+            invoke EditHandler, user_input
+        .ENDIF
+    .ENDIF
+    ;绘制部分
+    invoke DrawText
+    mov eax, DWORD PTR[cursor_position_ui]
+    invoke SetConsoleCursorPosition, hNewScreenBuffer, eax
     ret
-keyInputHandle ENDP
+Dispatch ENDP
 
-
-EditingStatusHandle PROC
-    local key_input: KEY_INPUT
-    pushad
-    invoke PopInputQueue, addr key_input
-
-    .if key_input.is_special == 0
-        ;normal char
-        invoke NormalKeyDeal, key_input    
-    .else
-        ;special key
-        invoke SpecialKeyDeal, key_input
-    .endif
-
-    ;need redraw here
-quit:
-    popad
-    ret
-
-EditingStatusHandle ENDP
-
-
-
-NormalKeyDeal PROC, key_input: KEY_INPUT
-    pushad
-
-        mov edi, cursor_position_logic.p_node
-        mov eax, cursor_position_logic.index_char
-        mov esi, (Node PTR [edi]).data
-        invoke InsertChar esi, key_input.ascii_char, cursor_position_logic.index_char
-        inc cursor_position_logic.index_char
-        mov ax, window_size.x
-        mov bx, window_size.y
-        inc cursor_position_ui.x
-        .if ax == cursor_position_ui.x
-            mov cursor_position_ui.x, 0
-            inc cursor_position_ui.y
-            .if bx == cursor_position_ui.y
-                dec cursor_position_ui.y
-            .endif
-        .endif
-
-    popad
-    ret
-NormalKeyDeal ENDP
-
-
-SpecialKeyDeal PROC, key_input: KEY_INPUT
-    pushad
-        mov ax, key_input.virtual_key
-        .if ax == VK_LEFT
-            invoke LeftKeyHandler
-
-
-        .elseif ax == VK_RIGHT
-            invoke RightKeyHandler
-
-        .elseif ax == VK_UP
-            invoke UpKeyHandler
-
-        .elseif ax == VK_DOWN
-            invoke DownKeyHandler
-        .endif
-
-quit:
-    popad
-    ret
-SpecialKeyDeal ENDP
-
-END
+start:
+    invoke InitList, addr text_list
+    ;创建新屏幕
+    invoke GetStdHandle, STD_OUTPUT_HANDLE
+	mov hStdout, eax
+	invoke CreateConsoleScreenBuffer, GENERIC_READ + GENERIC_WRITE,	FILE_SHARE_READ + FILE_SHARE_WRITE, 0, CONSOLE_TEXTMODE_BUFFER, 0
+	mov hNewScreenBuffer, eax
+	invoke SetConsoleActiveScreenBuffer, hNewScreenBuffer
+	invoke UIInit, hNewScreenBuffer
+    invoke InitInputQueue
+    ;文档链表初始化
+    invoke InitList, addr text_list
+    mov_m2m text_list.currentNode, text_list.head
+    ;创建一个空的行
+    invoke InsertNode, addr text_list
+    ;光标初始化
+    mov cursor_position_ui.x, 0
+    mov cursor_position_ui.y, 0
+    mov eax, text_list.head
+    mov_m2m cursor_position_logic.p_node, (Node PTR [eax]).next
+    mov cursor_position_logic.index_char, 0
+    invoke SetConsoleCursorInfo, hNewScreenBuffer, addr _cursor_info
+    ;工作循环
+    loop_work:
+        invoke GetUserKeyInput
+        invoke PopInputQueue, addr input
+        invoke Dispatch, input
+        jmp loop_work
+    invoke ExitProcess, 0
+END start
