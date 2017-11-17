@@ -138,11 +138,11 @@ ReadFileToList PROC,  p_file_name: DWORD
                         pop (Node PTR[esi]).data.string
                     .endif
                 popad
-
-                mov eax, (Node PTR[esi]).data.dataLength
-                add esi, eax
+                
                 mov edi, esi
                 mov edi, (Node PTR[edi]).data.string
+                mov eax, (Node PTR[esi]).data.dataLength
+                add edi, eax
                 push edi
                 mov esi, OFFSET read_buffer
                 add esi, nowPlace
